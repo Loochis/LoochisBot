@@ -24,8 +24,12 @@ def getVideo(args):
         pass
 
     # Try to get video from search terms
+    multiVideo = []
     try:
-        return [pytube.Search(' '.join(args)).results[0]]
+        multiSearches = ' '.join(args).split('|')
+        for srch in multiSearches:
+            multiVideo.append(pytube.Search(srch).results[0])
+        return multiVideo
     except:
         pass
 
