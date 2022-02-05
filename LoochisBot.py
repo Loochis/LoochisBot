@@ -101,13 +101,30 @@ async def musicHelp(ctx):
 
 
 # FUN CMDS ------------------------------------------------------------------------------ ###
+@bot.command(aliases=["CAT", "CATME", "catme", "cat"])
+async def catMe(ctx):
+    embed = discord.Embed(
+        title = 'Random Image 🐈',
+        description = 'Random',
+        colour = discord.Colour.purple()
+    )
+    embed.set_image(url='https://source.unsplash.com/1600x900/?cat')
+    embed.set_footer(text="")
+    await ctx.send(embed=embed)
+
 @bot.command(aliases=["XKCD", "xkcd", "xme", "XME", "XkMe", "XKME"])
 async def xkme(ctx):
     Feed = feedparser.parse("https://xkcd.com/rss.xml")
     pointer = Feed.entries[0]
     soup = BeautifulSoup(pointer.description)
 
-    await ctx.send("**{}**\n".format(pointer.title) + "\n||*{}*||\n".format(soup.img["alt"]) + soup.img["src"])
+    embed = discord.Embed(
+        title="XKCD " + pointer.link.split('/')[3] + " - " + pointer.title,
+        colour=discord.Colour.dark_gray()
+    )
+    embed.set_image(url=soup.img["src"])
+    embed.set_footer(text=soup.img["alt"])
+    await ctx.send(embed=embed)
 
 @bot.command(aliases=["Troll", "TROLL"])
 async def troll(ctx, user: discord.User):
