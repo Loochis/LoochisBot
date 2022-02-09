@@ -108,7 +108,6 @@ class BSReqHandler:
         for line in reqFile:
             reqLs.append(line.strip('\n'))
         reqFile.close()
-        reqLs.sort()
         self.requests = reqLs
 
     def add_req(self, song):
