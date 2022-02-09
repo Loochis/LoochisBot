@@ -3,11 +3,10 @@
 from bs4 import BeautifulSoup
 import time
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 
-firefoxOptions = Options()
-firefoxOptions.headless = True
-driver = webdriver.Firefox(options=firefoxOptions)
+chromeOptions = Options()
+driver = webdriver.Chrome()
 driver.minimize_window()
 
 
