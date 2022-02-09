@@ -492,6 +492,7 @@ async def BeatSaberList(ctx, *args):
         await ctx.send("Nothing in Queue!")
         return
 
+    print([x.split("")[1] for x in reqManager.requests])
     outStr = pageListFormatter([x.split("")[1] for x in reqManager.requests], pageNum)
     await ctx.send(outStr)
 

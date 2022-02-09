@@ -9,6 +9,7 @@ chromeOptions = Options()
 driver = webdriver.Chrome()
 driver.minimize_window()
 
+#driver = webdriver.Firefox()
 
 class BSSong:
     url = ""
@@ -105,7 +106,7 @@ class BSReqHandler:
         reqLs = []
         reqFile = open("BSReqs.txt", "r")
         for line in reqFile:
-            reqLs.append(line)
+            reqLs.append(line.strip('\n'))
         reqFile.close()
         reqLs.sort()
         self.requests = reqLs
