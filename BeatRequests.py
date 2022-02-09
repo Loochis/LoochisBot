@@ -122,7 +122,7 @@ class BSReqHandler:
     def reqsToString(self):
         outFl = ""
         for l in self.requests:
-            outFl += l
+            outFl += l + "\n"
         return outFl
 
     def save_reqs(self):
