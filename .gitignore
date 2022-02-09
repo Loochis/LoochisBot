@@ -2,3 +2,5 @@
 /.env
 /.env.bak
 /venv/
+/BSReqs.txt
+/geckodriver.log

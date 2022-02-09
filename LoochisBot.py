@@ -4,6 +4,7 @@
 import googletrans
 import pytube
 
+import BeatRequests
 from Beans import BeanHandler
 from Movies import MovieHandler
 import Music
@@ -38,9 +39,10 @@ bot.remove_command('help')
 
 beanHandler = BeanHandler()
 movieHandler = MovieHandler(0)
+reqManager = BeatRequests.BSReqHandler()
 
 musicDict = dict()
-#service_urls=['translate.googleapis.com']
+# service_urls=['translate.googleapis.com']
 translator = Translator()
 
 
@@ -97,26 +99,25 @@ async def musicHelp(ctx):
     outStr += "\n+queue: Lists the current song queue"
     await ctx.send(outStr)
 
-# XKCD CMDS ----------------------------------------------------------------------------- ###
-
 
 # FUN CMDS ------------------------------------------------------------------------------ ###
 @bot.command(aliases=["CAT", "CATME", "catme", "cat"])
 async def catMe(ctx):
     embed = discord.Embed(
-        title = 'Random Image 🐈',
-        description = 'Random',
-        colour = discord.Colour.purple()
+        title='Random Image 🐈',
+        description='Random',
+        colour=discord.Colour.purple()
     )
     embed.set_image(url='https://source.unsplash.com/1600x900/?cat')
     embed.set_footer(text="")
     await ctx.send(embed=embed)
 
+
 @bot.command(aliases=["XKCD", "xkcd", "xme", "XME", "XkMe", "XKME"])
 async def xkme(ctx):
     Feed = feedparser.parse("https://xkcd.com/rss.xml")
     pointer = Feed.entries[0]
-    soup = BeautifulSoup(pointer.description)
+    soup = BeautifulSoup(pointer.description, "html.parser")
 
     embed = discord.Embed(
         title="XKCD " + pointer.link.split('/')[3] + " - " + pointer.title,
@@ -126,6 +127,7 @@ async def xkme(ctx):
     embed.set_footer(text=soup.img["alt"])
     await ctx.send(embed=embed)
 
+
 @bot.command(aliases=["Troll", "TROLL"])
 async def troll(ctx, user: discord.User):
     if ctx.author.id != ADMINID:
@@ -133,6 +135,7 @@ async def troll(ctx, user: discord.User):
     for i in range(10):
         await asyncio.sleep(1)
         await ctx.send(f"HEY <@{user.id}>")
+
 
 @bot.command()
 async def goom(ctx):
@@ -208,7 +211,6 @@ async def goodBot(ctx):
 
 
 # BEAN CMDS ----------------------------------------------------------------------------- ###
-
 
 @bot.command()
 async def beanMe(ctx):
@@ -439,26 +441,75 @@ async def queue(ctx, *args):
         return
 
     pageNum = 1
-    maxPageNum = math.floor(len(musicDict[str(guildID)]) / 10.0) + 1
     if args:
         try:
             pageNum = int(args[0])
         except:
             await ctx.send("Invalid Page Number")
+
+    outStr = pageListFormatter([x.title for x in musicDict[str(guildID)]], pageNum)
+
+    await ctx.send(outStr)
+
+
+# BEAT SABER REQUEST FUNCS -------------------------------------------------------------- ###
+
+@bot.command(aliases=["BS", "beatsaber", "BEATSABER", "bs", "bsrequest", "BEATSABERREQUEST"])
+async def BeatSaber(ctx, *args):
+    msg = await ctx.send("Searching...")
+    url = reqManager.getBeatsaverPage(' '.join(args))
+    if url[0:8] == "https://":
+        await msg.edit(content="Verifying...")
+        bsSong = BeatRequests.BSSong(url)
+        reqStatus = reqManager.add_req(bsSong)
+        if not reqStatus:
+            await msg.edit(content="Song already in queue!")
+            return
+
+        embed = discord.Embed(
+            title="[{}] ".format(bsSong.id) + bsSong.name,
+            description="Mapped By: {}".format(bsSong.mapper),
+            colour=discord.Colour.red()
+        )
+        embed.set_image(url=bsSong.coverArt)
+        embed.set_footer(text=bsSong.description)
+        embed.add_field(name="Votes", value="\👍 "+str(bsSong.upvotes) + " | \👎"+str(bsSong.downvotes), inline=False)
+        await msg.edit(content="Successfully added!", embed=embed)
+    else:
+        await msg.edit(content=url)
+
+@bot.command(aliases=["BSLS", "beatsaberlist", "BEATSABERLIST", "bsls", "bslist"])
+async def BeatSaberList(ctx, *args):
+    pageNum = 1
+    if args:
+        try:
+            pageNum = int(args[0])
+        except:
+            await ctx.send("Invalid Page Number")
+
+    reqManager.get_reqs()
+    if not reqManager.requests:
+        await ctx.send("Nothing in Queue!")
+        return
+
+    outStr = pageListFormatter([x.split("")[1] for x in reqManager.requests], pageNum)
+    await ctx.send(outStr)
+
+# HELPER FUNCS -------------------------------------------------------------------------- ###
+
+def pageListFormatter(pagedList, pageNum):
+    maxPageNum = math.floor(len(pagedList) / 10.0) + 1
     if pageNum < 1:
         pageNum = 1
     if pageNum > maxPageNum:
         pageNum = maxPageNum
 
     outStr = "Queue Page " + str(pageNum) + "/" + str(maxPageNum) + ":\n```"
-    outStr += "\n>> " + musicDict[str(guildID)][0].title
-    for i in range((pageNum-1) * 10, min(pageNum * 10, len(musicDict[str(guildID)]))):
-        outStr += "\n(" + str(i+1) + "). " + musicDict[str(guildID)][i].title
+    outStr += "\n>> " + pagedList[0]
+    for i in range((pageNum - 1) * 10, min(pageNum * 10, len(pagedList))):
+        outStr += "\n(" + str(i + 1) + "). " + pagedList[i]
     outStr += "```"
-    await ctx.send(outStr)
-
-
-# HELPER FUNCS -------------------------------------------------------------------------- ###
+    return outStr
 
 def sarcasify(*args):
     random.seed(time.time())
