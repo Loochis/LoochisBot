@@ -6,10 +6,10 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 chromeOptions = Options()
-#driver = webdriver.Chrome()
-#driver.minimize_window()
+driver = webdriver.Chrome()
+driver.minimize_window()
 
-driver = webdriver.Firefox()
+#driver = webdriver.Firefox()
 
 class BSSong:
     url = ""
