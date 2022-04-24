@@ -16,7 +16,7 @@ class BeanHandler:
     # 0 - Account was created
     # 1 - Account was succesfully opened
     def account_from_id(self, id):
-        beanFile = open("BeanAccs.txt", "r")
+        beanFile = open("AccountFiles/BeanAccs.txt", "r")
         for line in beanFile:
             args = line.split(',')
             if int(args[0]) == int(id):
@@ -28,7 +28,7 @@ class BeanHandler:
         return 0
 
     def create_account(self, id, amount):
-        beanFile = open("BeanAccs.txt", "a")
+        beanFile = open("AccountFiles/BeanAccs.txt", "a")
         beanFile.write(str(id) + "," + str(amount) + "\n")
         beanFile.close()
         self.beanAccount = BeanAccount(int(id), amount)
@@ -38,7 +38,7 @@ class BeanHandler:
         self.save_account()
 
     def save_account(self):
-        with open('BeanAccs.txt', 'r') as file:
+        with open('AccountFiles/BeanAccs.txt', 'r') as file:
             # read a list of lines into data
             lines = file.readlines()
 
@@ -48,7 +48,7 @@ class BeanHandler:
                 lines[i] = str(self.beanAccount.id) + "," + str(self.beanAccount.beans) + "\n"
                 print(lines)
                 # and write everything back
-                with open('BeanAccs.txt', 'w') as file:
+                with open('AccountFiles/BeanAccs.txt', 'w') as file:
                     file.writelines(lines)
                 file.close()
                 return 1

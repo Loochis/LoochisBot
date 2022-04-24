@@ -5,6 +5,8 @@ import googletrans
 import pytube
 
 import BeatRequests
+import Bugs
+from Bugs import BugHandler
 from Beans import BeanHandler
 from Movies import MovieHandler
 import Music
@@ -38,6 +40,7 @@ bot = commands.Bot(command_prefix='+', intents=intents)
 bot.remove_command('help')
 
 beanHandler = BeanHandler()
+bugHandler = BugHandler()
 movieHandler = MovieHandler(0)
 reqManager = BeatRequests.BSReqHandler()
 
@@ -101,6 +104,13 @@ async def musicHelp(ctx):
 
 
 # FUN CMDS ------------------------------------------------------------------------------ ###
+
+@bot.command()
+async def arabify(ctx, *args):
+    sarcStr = reverseChars(args)
+    await ctx.send(sarcStr)
+
+
 @bot.command(aliases=["CAT", "CATME", "catme", "cat"])
 async def catMe(ctx):
     embed = discord.Embed(
@@ -151,7 +161,6 @@ async def sCasm(ctx, *args):
     i = beanHandler.account_from_id(ctx.author.id)
     gain = random.randint(5, 20)
     beanHandler.add_beans(gain)
-    await ctx.send("+" + str(gain) + " BND")
 
 
 @bot.command()
@@ -258,6 +267,71 @@ async def beanCounter(ctx):
         await ctx.send(ctx.author.name + "'s Bean Account has been succesfully created!")
 
     await ctx.send(ctx.author.name + "'s Bean Account: \n```\nBalance: " + balFormat(beanHandler) + "```")
+
+
+# BUG CMDS ------------------------------------------------------------------------------ ###
+
+@bot.command(aliases=["sawbug", "SAWBUG", "sawbugs", "SAWBUGS", "sawBugs"])
+async def sawBug(ctx, *args):
+    gain = 1
+    if len(args) != 0 and int(args[0]) > 1:
+        gain = int(args[0])
+    i = bugHandler.account_from_id(ctx.author.id)
+    bugHandler.add_sightings(gain)
+    if i == 0:
+        await ctx.send(ctx.author.name + "Saw their first bug!\nWELCOME TO THE THUNDERDOME")
+
+    if gain == 1:
+        await ctx.send(str.upper(ctx.author.name) + " saw a bug!")
+    else:
+        await ctx.send(str.upper(ctx.author.name) + " saw " + str(gain) + " bugs!")
+
+
+@bot.command(aliases=["killedbug", "KILLEDBUG", "killedbugs", "KILLEDBUGS", "killedBugs"])
+async def killedBug(ctx, *args):
+    gain = 1
+    if len(args) != 0 and int(args[0]) > 1:
+        gain = int(args[0])
+    i = bugHandler.account_from_id(ctx.author.id)
+    bugHandler.add_kills(gain)
+    bugHandler.add_sightings(gain)
+    if i == 0:
+        await ctx.send(ctx.author.name + " Killed their first bug!\nWELCOME TO THE THUNDERDOME")
+
+    if gain == 1:
+        await ctx.send(str.upper(ctx.author.name) + " " + random.choice(Bugs.KILLED_SYNONYMS) + " a bug!")
+    else:
+        await ctx.send(
+            str.upper(ctx.author.name) + " " + random.choice(Bugs.KILLED_SYNONYMS) + " " + str(gain) + " bugs!")
+
+@bot.command(aliases=["killedseenbug", "KILLEDSEENBUG"])
+async def killedSeenBug(ctx):
+    bugHandler.account_from_id(ctx.author.id)
+    if bugHandler.bugAccount.kills >= bugHandler.bugAccount.sightings:
+        await ctx.send("Somethin' Ain't right here")
+        return
+    bugHandler.add_kills(1)
+
+    await ctx.send(
+        str.upper(ctx.author.name) + " " + random.choice(Bugs.KILLED_SYNONYMS) + " One that got away!")
+
+
+@bot.command()
+async def bugStats(ctx, user: discord.User = None):
+    if user is None:
+        user = ctx.author
+    i = bugHandler.account_from_id(user.id)
+    if i == 0:
+        await ctx.send(user.name + " hasn't committed bug crimes yet :(")
+        return
+    if bugHandler.bugAccount.kills != 0:
+        await ctx.send(ctx.author.name + "'s Bug crimes: \n```\nKills:     " + str(bugHandler.bugAccount.kills) + "\nSightings: "
+                    + str(bugHandler.bugAccount.sightings) + "\nK/S:       "
+                    + '{0:.3g}'.format(bugHandler.bugAccount.kills / bugHandler.bugAccount.sightings) + "```")
+    else:
+        await ctx.send(
+            ctx.author.name + " is a pacifist :( \n```\nKills:     " + str(bugHandler.bugAccount.kills) + "\nSightings: "
+            + str(bugHandler.bugAccount.sightings) + "```")
 
 
 # MOVIE CMDS ---------------------------------------------------------------------------- ###
@@ -473,10 +547,12 @@ async def BeatSaber(ctx, *args):
         )
         embed.set_image(url=bsSong.coverArt)
         embed.set_footer(text=bsSong.description)
-        embed.add_field(name="Votes", value="\👍 "+str(bsSong.upvotes) + " | \👎"+str(bsSong.downvotes), inline=False)
+        embed.add_field(name="Votes", value="\👍 " + str(bsSong.upvotes) + " | \👎" + str(bsSong.downvotes),
+                        inline=False)
         await msg.edit(content="Successfully added!", embed=embed)
     else:
         await msg.edit(content=url)
+
 
 @bot.command(aliases=["BSLS", "beatsaberlist", "BEATSABERLIST", "bsls", "bslist"])
 async def BeatSaberList(ctx, *args):
@@ -496,6 +572,7 @@ async def BeatSaberList(ctx, *args):
     outStr = pageListFormatter([x.split("")[1] for x in reqManager.requests], pageNum)
     await ctx.send(outStr)
 
+
 # HELPER FUNCS -------------------------------------------------------------------------- ###
 
 def pageListFormatter(pagedList, pageNum):
@@ -512,6 +589,7 @@ def pageListFormatter(pagedList, pageNum):
     outStr += "```"
     return outStr
 
+
 def sarcasify(*args):
     random.seed(time.time())
     outStr = '"'
@@ -522,6 +600,17 @@ def sarcasify(*args):
             outStr += " "
     outStr += '"'
     return outStr
+
+
+def reverseChars(*args):
+    outStr = u'\u202B'
+    for arg in args:
+        for argSt in arg:
+            for argCh in argSt:
+                outStr += argCh
+            outStr += " "
+    outStr += u'\u202B'
+    return outStr[::-1]
 
 
 def balFormat(bHandler):
